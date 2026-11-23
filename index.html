@@ -43,6 +43,7 @@
     body.dark-mode .border-slate-200, body.dark-mode .border-slate-300, body.dark-mode .border-slate-100 { border-color: #334155 !important; }
     body.dark-mode input, body.dark-mode textarea, body.dark-mode select { background-color: #0f172a !important; color: #f8fafc !important; border-color: #475569 !important; }
     body.dark-mode .option-card:hover { background-color: #312e81 !important; border-color: #6366f1 !important; }
+    body.dark-mode #sideDrawer { background-color: #1e293b !important; border-color: #334155 !important; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -53,38 +54,70 @@
   <!-- Top Navbar -->
   <header class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
-      <button type="button" id="logoBtn" class="flex items-center gap-2.5 text-left">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center font-extrabold text-sm shadow-sm">
-          PM
-        </div>
-        <div>
-          <span class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">pyq<span class="text-indigo-600">mocks</span></span>
-          <span class="hidden sm:inline-block ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">PDF &rarr; Mock Test</span>
-        </div>
-      </button>
+      <div class="flex items-center gap-2.5">
+        <button type="button" id="drawerOpenBtn" aria-label="Open Menu" class="w-9 h-9 rounded-xl border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-700 transition">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="5" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="12" cy="19" r="2" />
+          </svg>
+        </button>
+        <button type="button" id="logoBtn" class="flex items-center gap-2.5 text-left">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center font-extrabold text-sm shadow-sm">
+            PM
+          </div>
+          <div>
+            <span class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">pyq<span class="text-indigo-600">mocks</span></span>
+            <span class="hidden sm:inline-block ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">PDF &rarr; Mock Test</span>
+          </div>
+        </button>
+      </div>
 
-      <nav class="flex items-center gap-1.5 sm:gap-2">
-        <button type="button" data-nav="upload" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-50 text-indigo-700">
-          1. Upload PDF
-        </button>
-        <button type="button" data-nav="editor" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100">
-          2. Edit &amp; Key (<span id="navQCount">0</span>)
-        </button>
-        <button type="button" data-nav="test" id="navTestBtn" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100">
-          3. Attempt Mock
-        </button>
-        <button type="button" data-nav="history" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100">
-          4. History
-        </button>
-        <button type="button" id="installAppBtn" class="hidden px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs">
-          Install App
-        </button>
-        <button type="button" id="themeToggleBtn" title="Toggle Dark Mode" class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100">
-          🌙
-        </button>
-      </nav>
+      <span id="currentTabBadge" class="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
+        Home &amp; Library
+      </span>
     </div>
   </header>
+
+  <!-- Left Slide-Out Navigation Drawer -->
+  <div id="drawerBackdrop" class="fixed inset-0 z-40 hidden bg-slate-900/50 transition-opacity"></div>
+  <aside id="sideDrawer" class="fixed top-0 left-0 z-50 h-full w-72 max-w-[82vw] bg-white border-r border-slate-200 shadow-2xl transform -translate-x-full transition-transform duration-200 ease-out flex flex-col">
+    <div class="px-4 h-14 border-b border-slate-200 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center font-extrabold text-xs">PM</div>
+        <span class="font-extrabold text-slate-900 text-base">pyq<span class="text-indigo-600">mocks</span></span>
+      </div>
+      <button type="button" id="drawerCloseBtn" aria-label="Close Menu" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 text-lg font-bold">
+        &times;
+      </button>
+    </div>
+
+    <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto">
+      <button type="button" data-nav="upload" class="nav-tab w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-50 text-indigo-700 flex items-center gap-2.5">
+        <span>🏠</span><span>1. Home &amp; Upload PDF</span>
+      </button>
+      <button type="button" data-nav="editor" class="nav-tab w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center justify-between">
+        <span class="flex items-center gap-2.5"><span>✏️</span><span>2. Edit &amp; Answer Key</span></span>
+        <span id="navQCount" class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-xs font-bold">0</span>
+      </button>
+      <button type="button" data-nav="test" id="navTestBtn" class="nav-tab w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2.5">
+        <span>📝</span><span>3. Attempt Mock</span>
+      </button>
+      <button type="button" data-nav="history" class="nav-tab w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-2.5">
+        <span>📊</span><span>4. Score History</span>
+      </button>
+
+      <div class="pt-3 mt-3 border-t border-slate-200 space-y-2">
+        <button type="button" id="themeToggleBtn" class="w-full text-left px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center justify-between">
+          <span>Appearance</span>
+          <span id="themeIconLabel">🌙 Dark</span>
+        </button>
+        <button type="button" id="installAppBtn" class="hidden w-full px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-xs text-center">
+          📲 Install App
+        </button>
+      </div>
+    </nav>
+  </aside>
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
 
@@ -465,6 +498,26 @@
         .replace(/"/g, "&quot;");
     }
 
+    const TAB_LABELS = {
+      upload: "Home & Library",
+      editor: "Edit & Answer Key",
+      test: "Mock Test",
+      history: "Score History"
+    };
+
+    function openDrawer() {
+      document.getElementById("drawerBackdrop").classList.remove("hidden");
+      document.getElementById("sideDrawer").classList.remove("-translate-x-full");
+    }
+    function closeDrawer() {
+      document.getElementById("drawerBackdrop").classList.add("hidden");
+      document.getElementById("sideDrawer").classList.add("-translate-x-full");
+    }
+
+    document.getElementById("drawerOpenBtn").addEventListener("click", openDrawer);
+    document.getElementById("drawerCloseBtn").addEventListener("click", closeDrawer);
+    document.getElementById("drawerBackdrop").addEventListener("click", closeDrawer);
+
     function switchTab(tab) {
       app.activeTab = tab;
       ["upload", "editor", "test", "history"].forEach(t => {
@@ -472,10 +525,13 @@
       });
       document.querySelectorAll(".nav-tab").forEach(b => {
         const active = b.dataset.nav === tab;
+        const extra = b.dataset.nav === "editor" ? " justify-between" : " gap-2.5";
         b.className = active
-          ? "nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-50 text-indigo-700"
-          : "nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100";
+          ? "nav-tab w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-50 text-indigo-700 flex items-center" + extra
+          : "nav-tab w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center" + extra;
       });
+      const badge = document.getElementById("currentTabBadge");
+      if (badge) badge.textContent = TAB_LABELS[tab] || "pyqmocks";
       document.getElementById("navQCount").textContent = app.questions.length;
       if (tab === "editor") renderEditor();
       if (tab === "upload") renderSavedMocks();
@@ -484,6 +540,7 @@
 
     document.querySelectorAll(".nav-tab").forEach(btn => {
       btn.addEventListener("click", () => {
+        closeDrawer();
         if (btn.dataset.nav === "test") {
           if (app.questions.length === 0) {
             showToast("Please upload a PDF or add questions first!");
@@ -1286,7 +1343,8 @@
     // Dark Mode
     function applyTheme(dark) {
       document.body.classList.toggle("dark-mode", dark);
-      document.getElementById("themeToggleBtn").textContent = dark ? "☀️" : "🌙";
+      const lbl = document.getElementById("themeIconLabel");
+      if (lbl) lbl.textContent = dark ? "☀️ Light" : "🌙 Dark";
     }
     try {
       applyTheme(localStorage.getItem(THEME_KEY) === "dark");
