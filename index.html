@@ -96,19 +96,19 @@
           <div>
             <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">Ready to Attempt</span>
             <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1">Mock Test Library</h2>
-            <p class="text-xs sm:text-sm text-slate-500">Niche diye gaye papers par click karke seedha mock test shuru karein.</p>
+            <p class="text-xs sm:text-sm text-slate-500">Click any paper below to start a mock test immediately.</p>
           </div>
           <span id="libraryCountBadge" class="px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold">0 Papers</span>
         </div>
         <div id="publicLibraryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <div class="text-xs text-slate-400 italic py-3">Papers load ho rahe hain...</div>
+          <div class="text-xs text-slate-400 italic py-3">Loading papers...</div>
         </div>
       </div>
       <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
         <div class="max-w-2xl">
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Kisi bhi Exam Paper PDF ko Interactive Mock Test me badlein</h1>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Turn Any Exam Paper PDF into an Interactive Mock Test</h1>
           <p class="text-sm sm:text-base text-slate-600 mt-2">
-            Apna PYQ ya practice paper PDF upload karein. <strong class="text-slate-800">pyqmocks</strong> automatically questions aur options extract karke aapko ek CBT-style mock test deta hai — timer, question palette, negative marking aur instant score card ke saath.
+            Upload your PYQ or practice paper PDF. <strong class="text-slate-800">pyqmocks</strong> automatically extracts questions and options into a CBT-style mock test with a live timer, question palette, negative marking, and instant scorecard.
           </p>
         </div>
 
@@ -120,7 +120,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
           </div>
-          <p class="text-sm sm:text-base font-bold text-slate-800">PDF file yahan drag &amp; drop karein, ya click karke select karein</p>
+          <p class="text-sm sm:text-base font-bold text-slate-800">Drag & drop your PDF file here, or click to browse</p>
           <p class="text-xs text-slate-500 mt-1">Supports bilingual (Hindi / English) text PDFs &amp; scanned PDFs (side-by-side builder)</p>
           <div class="mt-4 flex flex-wrap justify-center gap-2.5">
             <button type="button" id="browsePdfBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-xs transition">
@@ -135,14 +135,14 @@
         <!-- Parsing Progress -->
         <div id="parseStatus" class="hidden mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center gap-3">
           <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <span id="parseStatusText" class="text-sm font-medium text-indigo-900">PDF padha ja raha hai...</span>
+          <span id="parseStatusText" class="text-sm font-medium text-indigo-900">Reading PDF...</span>
         </div>
 
         <!-- Quick Text / JSON Paste Alternative -->
         <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <h3 class="text-sm font-bold text-slate-800">Option B: Text Paste karke Mock Banayein</h3>
-            <p class="text-xs text-slate-500 mt-0.5 mb-2">Kisi bhi PDF ya website se questions copy-paste karein (e.g., <code>1. Question... A) Opt1 B) Opt2...</code>)</p>
+            <h3 class="text-sm font-bold text-slate-800">Option B: Paste Raw Text to Create Mock</h3>
+            <p class="text-xs text-slate-500 mt-0.5 mb-2">Copy and paste questions from any PDF or website (e.g., <code>1. Question... A) Opt1 B) Opt2...</code>)</p>
             <textarea id="pasteTextBox" rows="4" placeholder="1. भारत की राजधानी क्या है?&#10;A) मुंबई  B) नई दिल्ली  C) कोलकाता  D) चेन्नई&#10;Ans: B" class="w-full rounded-lg border border-slate-300 p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
             <button type="button" id="parseTextBtn" class="mt-2 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold">
               Auto-Extract Questions
@@ -152,11 +152,11 @@
           <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
             <div>
               <h3 class="text-sm font-bold text-slate-800">Saved Mock Tests (Browser Storage)</h3>
-              <p class="text-xs text-slate-500 mt-0.5 mb-2">Aapke banaye hue mock tests yahan save rehte hain.</p>
+              <p class="text-xs text-slate-500 mt-0.5 mb-2">Your locally saved mock tests appear here.</p>
               <div id="savedMocksList" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
             </div>
             <div class="mt-3 pt-2 border-t border-slate-200 flex items-center justify-between">
-              <span class="text-[11px] text-slate-500">JSON file se import karein:</span>
+              <span class="text-[11px] text-slate-500">Import from JSON file:</span>
               <label class="cursor-pointer px-3 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-xs font-semibold text-slate-700">
                 Import JSON
                 <input type="file" id="jsonImportInput" accept=".json,application/json" class="hidden" />
@@ -172,7 +172,7 @@
       <!-- Top Controls Bar -->
       <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-3 shadow-xs">
         <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[240px]">
-          <input type="text" id="testTitleInput" value="My PYQ Mock Test" class="text-base sm:text-lg font-bold text-slate-900 border-b-2 border-transparent focus:border-indigo-500 focus:outline-none bg-transparent px-1 py-0.5 w-full sm:w-72" placeholder="Test ka naam likhein..." />
+          <input type="text" id="testTitleInput" value="My PYQ Mock Test" class="text-base sm:text-lg font-bold text-slate-900 border-b-2 border-transparent focus:border-indigo-500 focus:outline-none bg-transparent px-1 py-0.5 w-full sm:w-72" placeholder="Enter test title..." />
           <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
             <span id="editorTotalQ">0</span> Questions
           </span>
@@ -205,7 +205,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 class="text-sm font-bold text-amber-950">Scanned PDF Detected — Auto-OCR Ready</h3>
-            <p class="text-xs text-amber-800">Is PDF mein selectable text kam hai. Aap <strong>Run Auto-OCR</strong> se questions automatically extract kar sakte hain ya page dekh kar add kar sakte hain.</p>
+            <p class="text-xs text-amber-800">This PDF has limited selectable text. Use <strong>OCR This Page</strong> or <strong>OCR All Pages</strong> to extract questions automatically, or add them manually using the page preview.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <select id="ocrLangSelect" class="rounded-lg border border-amber-300 bg-white px-2 py-1 text-xs font-semibold text-amber-950">
@@ -227,7 +227,7 @@
         </div>
         <div id="ocrProgressBox" class="hidden bg-white rounded-xl border border-amber-200 p-3 space-y-1.5">
           <div class="flex justify-between text-xs font-semibold text-indigo-900">
-            <span id="ocrStatusLabel">OCR taiyaar ho raha hai...</span>
+            <span id="ocrStatusLabel">Preparing OCR...</span>
             <span id="ocrPctLabel">0%</span>
           </div>
           <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -366,7 +366,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
             <h2 class="text-xl font-extrabold text-slate-900">Score History &amp; Progress</h2>
-            <p class="text-xs sm:text-sm text-slate-500">Aapke pichle saare mock test attempts ka record aur accuracy trend.</p>
+            <p class="text-xs sm:text-sm text-slate-500">Your past mock test attempts and accuracy trend.</p>
           </div>
           <button type="button" id="clearHistoryBtn" class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold">
             Clear History
@@ -402,7 +402,7 @@
   <div id="submitModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
       <h3 class="text-lg font-bold text-slate-900">Submit Mock Test?</h3>
-      <p class="text-sm text-slate-600 mt-1">Submit karne ke baad aap apna score aur answer key dekh sakenge.</p>
+      <p class="text-sm text-slate-600 mt-1">Once submitted, you can view your score and detailed answer key.</p>
       <div class="mt-4 bg-slate-50 rounded-xl p-3 text-sm space-y-1 border border-slate-100">
         <div class="flex justify-between"><span>Total Questions:</span><span id="mTotal" class="font-bold">0</span></div>
         <div class="flex justify-between text-emerald-700"><span>Answered:</span><span id="mAns" class="font-bold">0</span></div>
@@ -486,7 +486,7 @@
       btn.addEventListener("click", () => {
         if (btn.dataset.nav === "test") {
           if (app.questions.length === 0) {
-            showToast("Pehle PDF upload karein ya questions add karein!");
+            showToast("Please upload a PDF or add questions first!");
             return;
           }
           startMockTest();
@@ -587,18 +587,18 @@
 
     async function handlePdfFile(file) {
       if (!file.name.toLowerCase().endsWith(".pdf")) {
-        showToast("Kripya ek valid PDF file select karein.");
+        showToast("Please select a valid PDF file.");
         return;
       }
       if (!window.pdfjsLib) {
-        showToast("PDF reader library load nahi ho payi. Text paste option use karein.");
+        showToast("PDF reader library failed to load. Please use the text paste option.");
         return;
       }
 
       const statusBox = document.getElementById("parseStatus");
       const statusText = document.getElementById("parseStatusText");
       statusBox.classList.remove("hidden");
-      statusText.textContent = `"${file.name}" padha ja raha hai...`;
+      statusText.textContent = `Reading "${file.name}"...`;
 
       try {
         const buf = await file.arrayBuffer();
@@ -610,7 +610,7 @@
 
         let fullText = "";
         for (let p = 1; p <= pdf.numPages; p++) {
-          statusText.textContent = `Page ${p} / ${pdf.numPages} extract ho raha hai...`;
+          statusText.textContent = `Extracting page ${p} / ${pdf.numPages}...`;
           const page = await pdf.getPage(p);
           const content = await page.getTextContent();
           let lastY = null;
@@ -631,7 +631,7 @@
         if (extracted.length > 0) {
           app.questions = extracted;
           document.getElementById("scannedPdfPanel").classList.add("hidden");
-          showToast(`${extracted.length} questions PDF se extract ho gaye!`);
+          showToast(`Extracted ${extracted.length} questions from PDF!`);
           switchTab("editor");
         } else {
           // Scanned PDF fallback: show page preview + manual quick builder
@@ -644,12 +644,12 @@
           }];
           document.getElementById("scannedPdfPanel").classList.remove("hidden");
           await renderPdfPreviewPage();
-          showToast("Scanned PDF detected! Side-by-side preview se questions add karein.");
+          showToast("Scanned PDF detected! Use Auto-OCR or the side-by-side preview to add questions.");
           switchTab("editor");
         }
       } catch (err) {
         statusBox.classList.add("hidden");
-        showToast("PDF parse karne me error aaya. Text paste try karein.");
+        showToast("Error parsing PDF. Try pasting the text instead.");
       }
     }
 
@@ -678,11 +678,11 @@
     // ==================== SCANNED PDF AUTO-OCR (TESSERACT.JS) ====================
     async function runPdfOcr(allPages) {
       if (!app.pdfDoc) {
-        showToast("Pehle koi PDF upload karein.");
+        showToast("Please upload a PDF first.");
         return;
       }
       if (!window.Tesseract) {
-        showToast("OCR library load nahi ho payi. Internet connection check karein.");
+        showToast("OCR library failed to load. Please check your internet connection.");
         return;
       }
 
@@ -709,7 +709,7 @@
         });
 
         for (let p = startPage; p <= endPage; p++) {
-          label.textContent = `Page ${p} / ${endPage} scan ho raha hai (${lang})...`;
+          label.textContent = `Scanning page ${p} / ${endPage} (${lang})...`;
           pctEl.textContent = "0%";
           bar.style.width = "0%";
 
@@ -733,14 +733,14 @@
           const merged = existingValid.concat(extracted).map((q, i) => ({ ...q, id: i + 1 }));
           app.questions = merged;
           renderEditor();
-          showToast(`OCR complete! ${extracted.length} questions extract ho gaye.`);
+          showToast(`OCR complete! Extracted ${extracted.length} questions.`);
         } else {
           document.getElementById("pasteTextBox").value = combinedText.trim();
-          showToast("OCR text nikla par auto-format match nahi hua — Upload tab ke Text box me copy ho gaya hai.");
+          showToast("OCR extracted text, but auto-format didn't match — copied to the Text Paste box on the Upload tab.");
         }
       } catch (err) {
         box.classList.add("hidden");
-        showToast("OCR me error aaya. Internet connection check karke dubara try karein.");
+        showToast("OCR encountered an error. Please check your internet connection and try again.");
       }
     }
 
@@ -750,16 +750,16 @@
     // ==================== TEXT PASTE & SAMPLE PAPER ====================
     document.getElementById("parseTextBtn").addEventListener("click", () => {
       const raw = document.getElementById("pasteTextBox").value.trim();
-      if (!raw) { showToast("Pehle text paste karein."); return; }
+      if (!raw) { showToast("Please paste some text first."); return; }
       const extracted = parseQuestionsFromText(raw);
       if (extracted.length === 0) {
-        showToast("Format match nahi hua. Example: 1. Question A) Opt1 B) Opt2");
+        showToast("Format didn't match. Example: 1. Question A) Opt1 B) Opt2");
         return;
       }
       app.questions = extracted;
       app.title = "Pasted PYQ Mock Test";
       document.getElementById("testTitleInput").value = app.title;
-      showToast(`${extracted.length} questions extract ho gaye!`);
+      showToast(`Extracted ${extracted.length} questions!`);
       switchTab("editor");
     });
 
@@ -803,7 +803,7 @@
           exp: "Appointed in Nov 1927, the Simon Commission arrived in India in February 1928."
         }
       ];
-      showToast("Sample PYQ Paper load ho gaya!");
+      showToast("Sample PYQ Paper loaded!");
       switchTab("editor");
     });
 
@@ -814,7 +814,7 @@
       const list = document.getElementById("editorList");
 
       if (app.questions.length === 0) {
-        list.innerHTML = `<div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">Abhi koi question nahi hai. "+ Add Question" click karein ya PDF upload karein.</div>`;
+        list.innerHTML = `<div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">No questions yet. Click "+ Add Question" or upload a PDF.</div>`;
         return;
       }
 
@@ -841,7 +841,7 @@
                 <button type="button" data-del="${idx}" class="ed-del px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold">Delete</button>
               </div>
             </div>
-            <textarea rows="2" data-qidx="${idx}" placeholder="Question yahan likhein..." class="ed-qtext w-full rounded-xl border border-slate-200 p-2.5 text-sm font-medium focus:outline-none focus:border-indigo-500">${escapeHtml(q.text)}</textarea>
+            <textarea rows="2" data-qidx="${idx}" placeholder="Enter question text here..." class="ed-qtext w-full rounded-xl border border-slate-200 p-2.5 text-sm font-medium focus:outline-none focus:border-indigo-500">${escapeHtml(q.text)}</textarea>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${opts}</div>
             <input type="text" value="${escapeHtml(q.exp || "")}" data-qidx="${idx}" placeholder="Explanation (Optional)" class="ed-exp w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600 focus:outline-none focus:border-indigo-500" />
           </div>
@@ -913,9 +913,9 @@
       list.unshift(item);
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 15)));
-        showToast(`"${app.title}" save ho gaya!`);
+        showToast(`Saved "${app.title}"!`);
       } catch (e) {
-        showToast("Browser storage me save nahi ho paya — Export JSON use karein.");
+        showToast("Could not save to browser storage — please use Export JSON.");
       }
     }
 
@@ -925,7 +925,7 @@
       const container = document.getElementById("savedMocksList");
       const list = getSavedMocks();
       if (list.length === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-400 italic py-2">Abhi koi saved mock test nahi hai.</div>`;
+        container.innerHTML = `<div class="text-xs text-slate-400 italic py-2">No saved mock tests yet.</div>`;
         return;
       }
       container.innerHTML = list.map(m => `
@@ -986,7 +986,7 @@
           app.title = data.title || file.name.replace(/\.json$/i, "");
           app.questions = data.questions;
           document.getElementById("testTitleInput").value = app.title;
-          showToast(`${app.questions.length} questions import ho gaye!`);
+          showToast(`Imported ${app.questions.length} questions!`);
           switchTab("editor");
         }
       } catch (err) {
@@ -1001,7 +1001,7 @@
     function startMockTest() {
       const validQs = app.questions.filter(q => q.text.trim() !== "");
       if (validQs.length === 0) {
-        showToast("Kam se kam 1 valid question hona chahiye!");
+        showToast("Please add at least 1 valid question!");
         return;
       }
       app.questions = validQs.map((q, i) => ({ ...q, id: i + 1 }));
@@ -1042,7 +1042,7 @@
           document.getElementById("testTimerDisplay").textContent = formatTime(app.test.secondsLeft);
           if (app.test.secondsLeft === 0) {
             finalizeMockTest();
-            showToast("Time up! Test automatically submit ho gaya.");
+            showToast("Time's up! Your test has been submitted automatically.");
           }
         }
       }, 1000);
@@ -1299,13 +1299,13 @@
 
     // Shareable Mock Link
     document.getElementById("shareMockBtn").addEventListener("click", () => {
-      if (app.questions.length === 0) { showToast("Share karne ke liye kam se kam 1 question add karein."); return; }
+      if (app.questions.length === 0) { showToast("Please add at least 1 question before sharing."); return; }
       app.title = document.getElementById("testTitleInput").value.trim() || "PYQ Mock";
       const payload = JSON.stringify({ t: app.title, q: app.questions, c: app.config });
       const encoded = btoa(unescape(encodeURIComponent(payload)));
       const shareUrl = window.location.href.split("#")[0] + "#mock=" + encoded;
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(shareUrl).then(() => showToast("Share link copy ho gaya! WhatsApp par bhej sakte hain.")).catch(() => fallbackCopy(shareUrl));
+        navigator.clipboard.writeText(shareUrl).then(() => showToast("Share link copied to clipboard!")).catch(() => fallbackCopy(shareUrl));
       } else {
         fallbackCopy(shareUrl);
       }
@@ -1316,7 +1316,7 @@
       ta.value = text;
       document.body.appendChild(ta);
       ta.select();
-      try { document.execCommand("copy"); showToast("Share link copy ho gaya!"); } catch (e) { showToast("Link ready hai, browser bar se copy karein."); }
+      try { document.execCommand("copy"); showToast("Share link copied!"); } catch (e) { showToast("Link is ready — copy it from the address bar."); }
       document.body.removeChild(ta);
     }
 
@@ -1330,7 +1330,7 @@
             app.questions = data.q;
             app.config = data.c || { marks: 1, neg: 0, timeMin: 60 };
             document.getElementById("testTitleInput").value = app.title;
-            showToast(`Shared mock "${app.title}" load ho gaya!`);
+            showToast(`Loaded shared mock "${app.title}"!`);
             switchTab("editor");
           }
         }
@@ -1352,7 +1352,7 @@
       if (hist.length === 0) {
         document.getElementById("histAvgPct").textContent = "0%";
         document.getElementById("histBestPct").textContent = "0%";
-        document.getElementById("historyList").innerHTML = `<div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">Abhi tak koi mock test submit nahi kiya gaya hai.</div>`;
+        document.getElementById("historyList").innerHTML = `<div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">No mock tests submitted yet.</div>`;
         if (historyChartInstance) { historyChartInstance.destroy(); historyChartInstance = null; }
         return;
       }
@@ -1405,7 +1405,7 @@
     document.getElementById("clearHistoryBtn").addEventListener("click", () => {
       try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
       renderHistory();
-      showToast("Score history clear ho gayi.");
+      showToast("Score history cleared.");
     });
 
     // ==================== PUBLIC MOCK LIBRARY (library.json) ====================
@@ -1425,7 +1425,7 @@
 
       badge.textContent = `${app.publicLibrary.length} Paper${app.publicLibrary.length === 1 ? "" : "s"}`;
       if (app.publicLibrary.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-xs text-slate-400 italic py-2">Abhi library mein koi pre-loaded paper nahi hai. Niche PDF upload karke apna mock banayein.</div>`;
+        grid.innerHTML = `<div class="col-span-full text-xs text-slate-400 italic py-2">No pre-loaded papers in the library yet. Upload a PDF below to create your own mock.</div>`;
         return;
       }
 
@@ -1472,7 +1472,7 @@
 
     document.getElementById("addToLibraryBtn").addEventListener("click", () => {
       const validQs = app.questions.filter(q => q.text.trim() !== "");
-      if (validQs.length === 0) { showToast("Library mein add karne ke liye kam se kam 1 question hona chahiye."); return; }
+      if (validQs.length === 0) { showToast("Please add at least 1 question to add to the library."); return; }
       app.title = document.getElementById("testTitleInput").value.trim() || "PYQ Mock Paper";
       const newPaper = {
         id: app.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now().toString().slice(-4),
@@ -1493,7 +1493,7 @@
       a.download = "library.json";
       a.click();
       URL.revokeObjectURL(url);
-      showToast(`"${app.title}" jod kar nayi library.json download ho gayi! Ab ise GitHub par upload karein.`);
+      showToast(`Added "${app.title}" and downloaded updated library.json!`);
     });
 
     // Init
@@ -1515,7 +1515,7 @@
       deferredInstallPrompt.prompt();
       const res = await deferredInstallPrompt.userChoice;
       if (res && res.outcome === "accepted") {
-        showToast("pyqmocks app install ho raha hai!");
+        showToast("Installing pyqmocks app!");
       }
       deferredInstallPrompt = null;
       document.getElementById("installAppBtn").classList.add("hidden");
