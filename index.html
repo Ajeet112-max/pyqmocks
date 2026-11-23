@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyqmocks — PDF to Interactive Mock Test Maker</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .drop-active {
+      border-color: #4f46e5 !important;
+      background-color: #eef2ff !important;
+    }
+    .option-card {
+      transition: all 0.15s ease;
+    }
+    .option-card:hover {
+      border-color: #4f46e5;
+      background-color: #eef2ff;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden max-w-sm bg-slate-900 text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl shadow-lg transition-opacity"></div>
+
+  <!-- Top Navbar -->
+  <header class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+      <button type="button" id="logoBtn" class="flex items-center gap-2.5 text-left">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center font-extrabold text-sm shadow-sm">
+          PM
+        </div>
+        <div>
+          <span class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">pyq<span class="text-indigo-600">mocks</span></span>
+          <span class="hidden sm:inline-block ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">PDF &rarr; Mock Test</span>
+        </div>
+      </button>
+
+      <nav class="flex items-center gap-1.5 sm:gap-2">
+        <button type="button" data-nav="upload" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-50 text-indigo-700">
+          1. Upload PDF
+        </button>
+        <button type="button" data-nav="editor" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100">
+          2. Edit &amp; Key (<span id="navQCount">0</span>)
+        </button>
+        <button type="button" data-nav="test" id="navTestBtn" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100">
+          3. Attempt Mock
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- ==================== VIEW 1: UPLOAD & LIBRARY ==================== -->
+    <section id="viewUpload" class="space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+        <div class="max-w-2xl">
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Kisi bhi Exam Paper PDF ko Interactive Mock Test me badlein</h1>
+          <p class="text-sm sm:text-base text-slate-600 mt-2">
+            Apna PYQ ya practice paper PDF upload karein. <strong class="text-slate-800">pyqmocks</strong> automatically questions aur options extract karke aapko ek CBT-style mock test deta hai — timer, question palette, negative marking aur instant score card ke saath.
+          </p>
+        </div>
+
+        <!-- Dropzone -->
+        <div id="dropZone" class="mt-6 border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center bg-slate-50/70 hover:border-indigo-400 transition cursor-pointer">
+          <input type="file" id="pdfInput" accept=".pdf,application/pdf" class="hidden" />
+          <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <p class="text-sm sm:text-base font-bold text-slate-800">PDF file yahan drag &amp; drop karein, ya click karke select karein</p>
+          <p class="text-xs text-slate-500 mt-1">Supports bilingual (Hindi / English) text PDFs &amp; scanned PDFs (side-by-side builder)</p>
+          <div class="mt-4 flex flex-wrap justify-center gap-2.5">
+            <button type="button" id="browsePdfBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-xs transition">
+              Choose PDF File
+            </button>
+            <button type="button" id="loadSampleBtn" class="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition">
+              Try Sample PYQ Paper
+            </button>
+          </div>
+        </div>
+
+        <!-- Parsing Progress -->
+        <div id="parseStatus" class="hidden mt-4 p-4 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center gap-3">
+          <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <span id="parseStatusText" class="text-sm font-medium text-indigo-900">PDF padha ja raha hai...</span>
+        </div>
+
+        <!-- Quick Text / JSON Paste Alternative -->
+        <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <h3 class="text-sm font-bold text-slate-800">Option B: Text Paste karke Mock Banayein</h3>
+            <p class="text-xs text-slate-500 mt-0.5 mb-2">Kisi bhi PDF ya website se questions copy-paste karein (e.g., <code>1. Question... A) Opt1 B) Opt2...</code>)</p>
+            <textarea id="pasteTextBox" rows="4" placeholder="1. भारत की राजधानी क्या है?&#10;A) मुंबई  B) नई दिल्ली  C) कोलकाता  D) चेन्नई&#10;Ans: B" class="w-full rounded-lg border border-slate-300 p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+            <button type="button" id="parseTextBtn" class="mt-2 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold">
+              Auto-Extract Questions
+            </button>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-800">Saved Mock Tests (Browser Storage)</h3>
+              <p class="text-xs text-slate-500 mt-0.5 mb-2">Aapke banaye hue mock tests yahan save rehte hain.</p>
+              <div id="savedMocksList" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-200 flex items-center justify-between">
+              <span class="text-[11px] text-slate-500">JSON file se import karein:</span>
+              <label class="cursor-pointer px-3 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-xs font-semibold text-slate-700">
+                Import JSON
+                <input type="file" id="jsonImportInput" accept=".json,application/json" class="hidden" />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: EDITOR & ANSWER KEY ==================== -->
+    <section id="viewEditor" class="hidden space-y-4">
+      <!-- Top Controls Bar -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+        <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[240px]">
+          <input type="text" id="testTitleInput" value="My PYQ Mock Test" class="text-base sm:text-lg font-bold text-slate-900 border-b-2 border-transparent focus:border-indigo-500 focus:outline-none bg-transparent px-1 py-0.5 w-full sm:w-72" placeholder="Test ka naam likhein..." />
+          <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
+            <span id="editorTotalQ">0</span> Questions
+          </span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="addManualQBtn" class="px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold">
+            + Add Question
+          </button>
+          <button type="button" id="saveMockBtn" class="px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs sm:text-sm font-semibold">
+            Save Mock
+          </button>
+          <button type="button" id="exportJsonBtn" class="px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold">
+            Export JSON
+          </button>
+          <button type="button" id="startMockBtn" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-xs">
+            Start Mock Test &rarr;
+          </button>
+        </div>
+      </div>
+
+      <!-- Scanned PDF Helper Notice (shown if PDF had pages but low text) -->
+      <div id="scannedPdfPanel" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-bold text-amber-950">Scanned PDF Preview Mode</h3>
+            <p class="text-xs text-amber-800">Is PDF mein selectable text kam tha (scanned image PDF). Aap yahan page dekh kar side mein "+ Add Question" se questions add kar sakte hain.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" id="prevPdfPageBtn" class="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-xs font-semibold text-amber-900">&larr; Prev Page</button>
+            <span id="pdfPageIndicator" class="text-xs font-bold text-amber-900">Page 1 / 1</span>
+            <button type="button" id="nextPdfPageBtn" class="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-xs font-semibold text-amber-900">Next Page &rarr;</button>
+            <button type="button" id="hidePdfPreviewBtn" class="px-2.5 py-1 rounded-lg bg-amber-200/70 text-xs font-semibold text-amber-950">Hide</button>
+          </div>
+        </div>
+        <div class="max-h-96 overflow-auto bg-white rounded-xl border border-amber-200 p-2 flex justify-center">
+          <canvas id="pdfPreviewCanvas" class="max-w-full h-auto"></canvas>
+        </div>
+      </div>
+
+      <!-- Mock Settings Strip -->
+      <div class="bg-white rounded-xl border border-slate-200 p-3.5 flex flex-wrap items-center gap-4 text-xs sm:text-sm">
+        <div class="flex items-center gap-2">
+          <label class="font-semibold text-slate-700" for="cfgMarks">Correct Marks:</label>
+          <input type="number" id="cfgMarks" value="1" min="0.5" step="0.5" class="w-16 rounded-lg border border-slate-300 px-2 py-1 text-center font-semibold" />
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="font-semibold text-slate-700" for="cfgNeg">Negative Marking:</label>
+          <select id="cfgNeg" class="rounded-lg border border-slate-300 px-2.5 py-1 font-semibold bg-white">
+            <option value="0">0 (No Negative)</option>
+            <option value="0.25">-0.25 (1/4)</option>
+            <option value="0.3333">-0.33 (1/3)</option>
+            <option value="0.5">-0.50 (1/2)</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="font-semibold text-slate-700" for="cfgTime">Time Limit (min):</label>
+          <input type="number" id="cfgTime" value="60" min="1" max="300" class="w-16 rounded-lg border border-slate-300 px-2 py-1 text-center font-semibold" />
+        </div>
+      </div>
+
+      <!-- Questions Editor List -->
+      <div id="editorList" class="space-y-3"></div>
+    </section>
+
+    <!-- ==================== VIEW 3: MOCK TEST ENGINE ==================== -->
+    <section id="viewTest" class="hidden space-y-5">
+      <!-- Active Test Header Bar -->
+      <div id="testActiveBar" class="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+        <div>
+          <h2 id="activeTestTitle" class="text-base sm:text-lg font-bold text-slate-900">Mock Test</h2>
+          <p class="text-xs text-slate-500"><span id="activeAttempted">0</span> Attempted &bull; <span id="activeMarkingInfo">+1 / 0</span></p>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-medium">
+            <button type="button" data-tmode="single" class="tmode-btn px-2.5 py-1 rounded-md bg-white text-indigo-700 shadow-xs">1-by-1</button>
+            <button type="button" data-tmode="all" class="tmode-btn px-2.5 py-1 rounded-md text-slate-600">All</button>
+          </div>
+          <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-800 tabular-nums">
+            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span id="testTimerDisplay">60:00</span>
+          </div>
+          <button type="button" id="submitTestBtn" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-xs">
+            Submit Test
+          </button>
+        </div>
+      </div>
+
+      <!-- Test Main Grid -->
+      <div id="testGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div class="lg:col-span-8 space-y-4">
+          <div id="testQuestionArea"></div>
+          <div id="testSingleNav" class="bg-white rounded-xl border border-slate-200 p-3.5 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+            <div class="flex items-center gap-2">
+              <button type="button" id="tPrevBtn" class="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium disabled:opacity-40">&larr; Previous</button>
+              <button type="button" id="tClearBtn" class="px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-600 text-sm font-medium">Clear</button>
+              <button type="button" id="tMarkBtn" class="px-3 py-2 rounded-lg border border-purple-300 bg-purple-50 hover:bg-purple-100 text-purple-700 text-sm font-medium">Mark Review</button>
+            </div>
+            <button type="button" id="tNextBtn" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Save &amp; Next &rarr;</button>
+          </div>
+        </div>
+
+        <aside class="lg:col-span-4 lg:sticky lg:top-20 bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+          <h3 class="text-sm font-bold text-slate-800 mb-2.5">Question Palette</h3>
+          <div class="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600 mb-3 pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500 inline-block"></span> Answered (<span id="tCntAns">0</span>)</div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-purple-500 inline-block"></span> Marked (<span id="tCntMark">0</span>)</div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-100 border border-rose-300 inline-block"></span> Skipped (<span id="tCntSkip">0</span>)</div>
+            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span> Not Visited (<span id="tCntNot">0</span>)</div>
+          </div>
+          <div id="tPaletteGrid" class="grid grid-cols-5 sm:grid-cols-10 lg:grid-cols-5 gap-1.5 max-h-80 overflow-y-auto pr-1"></div>
+        </aside>
+      </div>
+
+      <!-- Results Dashboard -->
+      <div id="testResultArea" class="hidden space-y-5">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">Test Submitted</span>
+              <h2 id="resTestTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1.5">Score Card</h2>
+              <p class="text-xs sm:text-sm text-slate-500">Time Taken: <span id="resTime" class="font-semibold text-slate-700">00:00</span></p>
+            </div>
+            <div class="flex gap-2">
+              <button type="button" id="backToEditorBtn" class="px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold">Edit Questions</button>
+              <button type="button" id="retakeMockBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold">Retake Test</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
+              <div class="text-xs font-semibold text-indigo-600 uppercase">Total Score</div>
+              <div id="resTotalScore" class="text-2xl sm:text-3xl font-extrabold text-indigo-900 mt-1">0</div>
+              <div id="resPct" class="text-xs font-medium text-indigo-700 mt-0.5">0%</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center">
+              <div class="text-xs font-semibold text-emerald-600 uppercase">Correct</div>
+              <div id="resCorrectCnt" class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-1">0</div>
+            </div>
+            <div class="bg-rose-50 border border-rose-100 rounded-xl p-4 text-center">
+              <div class="text-xs font-semibold text-rose-600 uppercase">Incorrect</div>
+              <div id="resWrongCnt" class="text-2xl sm:text-3xl font-extrabold text-rose-700 mt-1">0</div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+              <div class="text-xs font-semibold text-slate-500 uppercase">Unattempted</div>
+              <div id="resSkipCnt" class="text-2xl sm:text-3xl font-extrabold text-slate-700 mt-1">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="resReviewList" class="space-y-3"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Submit Confirmation Modal -->
+  <div id="submitModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
+      <h3 class="text-lg font-bold text-slate-900">Submit Mock Test?</h3>
+      <p class="text-sm text-slate-600 mt-1">Submit karne ke baad aap apna score aur answer key dekh sakenge.</p>
+      <div class="mt-4 bg-slate-50 rounded-xl p-3 text-sm space-y-1 border border-slate-100">
+        <div class="flex justify-between"><span>Total Questions:</span><span id="mTotal" class="font-bold">0</span></div>
+        <div class="flex justify-between text-emerald-700"><span>Answered:</span><span id="mAns" class="font-bold">0</span></div>
+        <div class="flex justify-between text-slate-500"><span>Unanswered:</span><span id="mUnans" class="font-bold">0</span></div>
+      </div>
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" id="mCancelBtn" class="px-4 py-2 rounded-lg border border-slate-300 text-sm font-medium text-slate-700">Back</button>
+        <button type="button" id="mConfirmBtn" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Yes, Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configure PDF.js worker safely
+    if (window.pdfjsLib) {
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      } catch (e) {}
+    }
+
+    const STORAGE_KEY = "pyqmocks_saved_tests_v1";
+
+    let app = {
+      activeTab: "upload",
+      title: "My PYQ Mock Test",
+      questions: [], // { id, text, options: {A,B,C,D,E}, ans: 'A'|'B'|'C'|'D'|'E'|'', exp: '' }
+      config: { marks: 1, neg: 0, timeMin: 60 },
+      pdfDoc: null,
+      pdfPage: 1,
+      test: {
+        mode: "single",
+        idx: 0,
+        answers: {},
+        marked: {},
+        visited: {},
+        submitted: false,
+        secondsLeft: 3600,
+        elapsed: 0,
+        timer: null
+      }
+    };
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.remove("hidden");
+      setTimeout(() => t.classList.add("hidden"), 3200);
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function switchTab(tab) {
+      app.activeTab = tab;
+      ["upload", "editor", "test"].forEach(t => {
+        document.getElementById("view" + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle("hidden", t !== tab);
+      });
+      document.querySelectorAll(".nav-tab").forEach(b => {
+        const active = b.dataset.nav === tab;
+        b.className = active
+          ? "nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-50 text-indigo-700"
+          : "nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100";
+      });
+      document.getElementById("navQCount").textContent = app.questions.length;
+      if (tab === "editor") renderEditor();
+      if (tab === "upload") renderSavedMocks();
+    }
+
+    document.querySelectorAll(".nav-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (btn.dataset.nav === "test") {
+          if (app.questions.length === 0) {
+            showToast("Pehle PDF upload karein ya questions add karein!");
+            return;
+          }
+          startMockTest();
+        } else {
+          switchTab(btn.dataset.nav);
+        }
+      });
+    });
+
+    document.getElementById("logoBtn").addEventListener("click", () => switchTab("upload"));
+
+    // ==================== SMART TEXT TO MCQ PARSER ====================
+    function parseQuestionsFromText(rawText) {
+      const normalized = rawText
+        .replace(/\r/g, "\n")
+        .replace(/\u00a0/g, " ")
+        .replace(/[ \t]+/g, " ");
+
+      // Split into lines and clean
+      const lines = normalized.split("\n").map(l => l.trim()).filter(Boolean);
+      const blocks = [];
+      let current = [];
+
+      // Detect question starts like "1.", "1)", "Q.1", "Q1.", "प्र. 1"
+      const qStartRe = /^(?:Q\.?\s*|प्र\.?\s*)?(\d{1,3})\s*[\.\)\:]\s+(.+)/i;
+
+      for (const line of lines) {
+        if (qStartRe.test(line) && current.length > 0) {
+          blocks.push(current.join("\n"));
+          current = [line];
+        } else {
+          current.push(line);
+        }
+      }
+      if (current.length > 0) blocks.push(current.join("\n"));
+
+      const parsed = [];
+      for (const blk of blocks) {
+        const m = blk.match(qStartRe);
+        if (!m) continue;
+        const body = m[2] + (blk.includes("\n") ? "\n" + blk.split("\n").slice(1).join("\n") : "");
+
+        // Extract optional Ans: X
+        let ans = "";
+        let cleanBody = body.replace(/(?:Ans(?:wer)?|उत्तर)\s*[:\-]\s*\(?([A-E])\)?/gi, (_, a) => {
+          ans = a.toUpperCase();
+          return "";
+        });
+
+        // Split options A) / (A) / A. / B) ...
+        const optRe = /(?:^|\s|\n)\(?([A-E])\)?[\.\)]\s+/g;
+        const matches = [...cleanBody.matchAll(optRe)];
+        if (matches.length >= 2) {
+          const qText = cleanBody.slice(0, matches[0].index).trim();
+          const options = { A: "", B: "", C: "", D: "", E: "" };
+          for (let i = 0; i < matches.length; i++) {
+            const key = matches[i][1].toUpperCase();
+            const start = matches[i].index + matches[i][0].length;
+            const end = i + 1 < matches.length ? matches[i + 1].index : cleanBody.length;
+            options[key] = cleanBody.slice(start, end).trim();
+          }
+          if (qText) {
+            parsed.push({
+              id: parsed.length + 1,
+              text: qText,
+              options,
+              ans,
+              exp: ""
+            });
+          }
+        }
+      }
+      return parsed;
+    }
+
+    // ==================== PDF UPLOAD & EXTRACTION ====================
+    const dropZone = document.getElementById("dropZone");
+    const pdfInput = document.getElementById("pdfInput");
+
+    document.getElementById("browsePdfBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      pdfInput.click();
+    });
+    dropZone.addEventListener("click", () => pdfInput.click());
+    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drop-active"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drop-active"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("drop-active");
+      const file = e.dataTransfer.files[0];
+      if (file) handlePdfFile(file);
+    });
+    pdfInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) handlePdfFile(file);
+      pdfInput.value = "";
+    });
+
+    async function handlePdfFile(file) {
+      if (!file.name.toLowerCase().endsWith(".pdf")) {
+        showToast("Kripya ek valid PDF file select karein.");
+        return;
+      }
+      if (!window.pdfjsLib) {
+        showToast("PDF reader library load nahi ho payi. Text paste option use karein.");
+        return;
+      }
+
+      const statusBox = document.getElementById("parseStatus");
+      const statusText = document.getElementById("parseStatusText");
+      statusBox.classList.remove("hidden");
+      statusText.textContent = `"${file.name}" padha ja raha hai...`;
+
+      try {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        app.pdfDoc = pdf;
+        app.pdfPage = 1;
+        app.title = file.name.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ");
+        document.getElementById("testTitleInput").value = app.title;
+
+        let fullText = "";
+        for (let p = 1; p <= pdf.numPages; p++) {
+          statusText.textContent = `Page ${p} / ${pdf.numPages} extract ho raha hai...`;
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          let lastY = null;
+          let pageStr = "";
+          for (const item of content.items) {
+            const y = item.transform[5];
+            if (lastY !== null && Math.abs(y - lastY) > 5) pageStr += "\n";
+            else if (pageStr.length > 0 && !pageStr.endsWith(" ") && !pageStr.endsWith("\n")) pageStr += " ";
+            pageStr += item.str;
+            lastY = y;
+          }
+          fullText += pageStr + "\n\n";
+        }
+
+        const extracted = parseQuestionsFromText(fullText);
+        statusBox.classList.add("hidden");
+
+        if (extracted.length > 0) {
+          app.questions = extracted;
+          document.getElementById("scannedPdfPanel").classList.add("hidden");
+          showToast(`${extracted.length} questions PDF se extract ho gaye!`);
+          switchTab("editor");
+        } else {
+          // Scanned PDF fallback: show page preview + manual quick builder
+          app.questions = app.questions.length ? app.questions : [{
+            id: 1,
+            text: "",
+            options: { A: "", B: "", C: "", D: "", E: "" },
+            ans: "A",
+            exp: ""
+          }];
+          document.getElementById("scannedPdfPanel").classList.remove("hidden");
+          await renderPdfPreviewPage();
+          showToast("Scanned PDF detected! Side-by-side preview se questions add karein.");
+          switchTab("editor");
+        }
+      } catch (err) {
+        statusBox.classList.add("hidden");
+        showToast("PDF parse karne me error aaya. Text paste try karein.");
+      }
+    }
+
+    async function renderPdfPreviewPage() {
+      if (!app.pdfDoc) return;
+      const page = await app.pdfDoc.getPage(app.pdfPage);
+      const viewport = page.getViewport({ scale: 1.3 });
+      const canvas = document.getElementById("pdfPreviewCanvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      document.getElementById("pdfPageIndicator").textContent = `Page ${app.pdfPage} / ${app.pdfDoc.numPages}`;
+    }
+
+    document.getElementById("prevPdfPageBtn").addEventListener("click", async () => {
+      if (app.pdfDoc && app.pdfPage > 1) { app.pdfPage--; await renderPdfPreviewPage(); }
+    });
+    document.getElementById("nextPdfPageBtn").addEventListener("click", async () => {
+      if (app.pdfDoc && app.pdfPage < app.pdfDoc.numPages) { app.pdfPage++; await renderPdfPreviewPage(); }
+    });
+    document.getElementById("hidePdfPreviewBtn").addEventListener("click", () => {
+      document.getElementById("scannedPdfPanel").classList.add("hidden");
+    });
+
+    // ==================== TEXT PASTE & SAMPLE PAPER ====================
+    document.getElementById("parseTextBtn").addEventListener("click", () => {
+      const raw = document.getElementById("pasteTextBox").value.trim();
+      if (!raw) { showToast("Pehle text paste karein."); return; }
+      const extracted = parseQuestionsFromText(raw);
+      if (extracted.length === 0) {
+        showToast("Format match nahi hua. Example: 1. Question A) Opt1 B) Opt2");
+        return;
+      }
+      app.questions = extracted;
+      app.title = "Pasted PYQ Mock Test";
+      document.getElementById("testTitleInput").value = app.title;
+      showToast(`${extracted.length} questions extract ho gaye!`);
+      switchTab("editor");
+    });
+
+    document.getElementById("loadSampleBtn").addEventListener("click", () => {
+      app.title = "UP Police / GS Sample PYQ Mock";
+      document.getElementById("testTitleInput").value = app.title;
+      app.questions = [
+        {
+          id: 1,
+          text: "भारतीय संविधान के किस अनुच्छेद के अंतर्गत वित्त आयोग का गठन किया जाता है? / Under which Article of the Indian Constitution is the Finance Commission constituted?",
+          options: { A: "अनुच्छेद 260 / Article 260", B: "अनुच्छेद 280 / Article 280", C: "अनुच्छेद 300 / Article 300", D: "अनुच्छेद 324 / Article 324", E: "" },
+          ans: "B",
+          exp: "Article 280 empowers the President to constitute a Finance Commission every five years."
+        },
+        {
+          id: 2,
+          text: "निम्नलिखित में से किसे 'हॉकी का जादूगर' कहा जाता है? / Who among the following is known as the 'Wizard of Hockey'?",
+          options: { A: "बलबीर सिंह सीनियर", B: "मेजर ध्यानचंद", C: "मोहम्मद शाहिद", D: "जयपाल सिंह मुंडा", E: "" },
+          ans: "B",
+          exp: "Major Dhyan Chand is celebrated as the Wizard of Hockey."
+        },
+        {
+          id: 3,
+          text: "उत्तर प्रदेश में कुल कितने प्रशासनिक मंडल हैं? / How many administrative divisions are there in Uttar Pradesh?",
+          options: { A: "16", B: "17", C: "18", D: "20", E: "" },
+          ans: "C",
+          exp: "Uttar Pradesh has 18 administrative divisions and 75 districts."
+        },
+        {
+          id: 4,
+          text: "एम.एस.-एक्सेल में #DIV/0! त्रुटि क्या दर्शाती है? / What does #DIV/0! error in MS-Excel indicate?",
+          options: { A: "गलत टेक्स्ट", B: "अमान्य सेल", C: "शून्य से भाग देना (Division by zero)", D: "फाइल करप्ट", E: "" },
+          ans: "C",
+          exp: "#DIV/0! appears when a formula divides by zero."
+        },
+        {
+          id: 5,
+          text: "साइमन कमीशन भारत कब आया था? / When did the Simon Commission arrive in India?",
+          options: { A: "1927", B: "1928", C: "1929", D: "1930", E: "" },
+          ans: "B",
+          exp: "Appointed in Nov 1927, the Simon Commission arrived in India in February 1928."
+        }
+      ];
+      showToast("Sample PYQ Paper load ho gaya!");
+      switchTab("editor");
+    });
+
+    // ==================== EDITOR VIEW ====================
+    function renderEditor() {
+      document.getElementById("editorTotalQ").textContent = app.questions.length;
+      document.getElementById("navQCount").textContent = app.questions.length;
+      const list = document.getElementById("editorList");
+
+      if (app.questions.length === 0) {
+        list.innerHTML = `<div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">Abhi koi question nahi hai. "+ Add Question" click karein ya PDF upload karein.</div>`;
+        return;
+      }
+
+      list.innerHTML = app.questions.map((q, idx) => {
+        const opts = ["A", "B", "C", "D", "E"].map(k => `
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 shrink-0 rounded-full text-xs font-bold flex items-center justify-center ${q.ans === k ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-700"}">${k}</span>
+            <input type="text" value="${escapeHtml(q.options[k] || "")}" data-qidx="${idx}" data-optk="${k}"
+              placeholder="Option ${k}${k === "E" ? " (Optional)" : ""}"
+              class="ed-opt flex-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs sm:text-sm focus:outline-none focus:border-indigo-500" />
+          </div>
+        `).join("");
+
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold">Question ${idx + 1}</span>
+              <div class="flex items-center gap-2">
+                <label class="text-xs font-semibold text-slate-600">Correct Answer:</label>
+                <select data-qidx="${idx}" class="ed-ans rounded-lg border border-slate-300 px-2 py-1 text-xs font-bold bg-white">
+                  <option value="" ${!q.ans ? "selected" : ""}>Not Set</option>
+                  ${["A", "B", "C", "D", "E"].map(k => `<option value="${k}" ${q.ans === k ? "selected" : ""}>Option ${k}</option>`).join("")}
+                </select>
+                <button type="button" data-del="${idx}" class="ed-del px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold">Delete</button>
+              </div>
+            </div>
+            <textarea rows="2" data-qidx="${idx}" placeholder="Question yahan likhein..." class="ed-qtext w-full rounded-xl border border-slate-200 p-2.5 text-sm font-medium focus:outline-none focus:border-indigo-500">${escapeHtml(q.text)}</textarea>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${opts}</div>
+            <input type="text" value="${escapeHtml(q.exp || "")}" data-qidx="${idx}" placeholder="Explanation (Optional)" class="ed-exp w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600 focus:outline-none focus:border-indigo-500" />
+          </div>
+        `;
+      }).join("");
+    }
+
+    document.getElementById("editorList").addEventListener("input", (e) => {
+      const idx = Number(e.target.dataset.qidx);
+      if (Number.isNaN(idx)) return;
+      if (e.target.classList.contains("ed-qtext")) app.questions[idx].text = e.target.value;
+      if (e.target.classList.contains("ed-opt")) app.questions[idx].options[e.target.dataset.optk] = e.target.value;
+      if (e.target.classList.contains("ed-exp")) app.questions[idx].exp = e.target.value;
+    });
+
+    document.getElementById("editorList").addEventListener("change", (e) => {
+      if (e.target.classList.contains("ed-ans")) {
+        const idx = Number(e.target.dataset.qidx);
+        app.questions[idx].ans = e.target.value;
+        renderEditor();
+      }
+    });
+
+    document.getElementById("editorList").addEventListener("click", (e) => {
+      const delBtn = e.target.closest(".ed-del");
+      if (delBtn) {
+        const idx = Number(delBtn.dataset.del);
+        app.questions.splice(idx, 1);
+        app.questions.forEach((q, i) => { q.id = i + 1; });
+        renderEditor();
+      }
+    });
+
+    document.getElementById("addManualQBtn").addEventListener("click", () => {
+      app.questions.push({
+        id: app.questions.length + 1,
+        text: "",
+        options: { A: "", B: "", C: "", D: "", E: "" },
+        ans: "A",
+        exp: ""
+      });
+      renderEditor();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    });
+
+    // ==================== SAVE / LOAD / EXPORT JSON ====================
+    function getSavedMocks() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveMockToStorage() {
+      app.title = document.getElementById("testTitleInput").value.trim() || "Untitled Mock";
+      const list = getSavedMocks();
+      const item = {
+        id: Date.now(),
+        title: app.title,
+        date: new Date().toLocaleDateString(),
+        questions: app.questions,
+        config: {
+          marks: parseFloat(document.getElementById("cfgMarks").value) || 1,
+          neg: parseFloat(document.getElementById("cfgNeg").value) || 0,
+          timeMin: parseInt(document.getElementById("cfgTime").value, 10) || 60
+        }
+      };
+      list.unshift(item);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 15)));
+        showToast(`"${app.title}" save ho gaya!`);
+      } catch (e) {
+        showToast("Browser storage me save nahi ho paya — Export JSON use karein.");
+      }
+    }
+
+    document.getElementById("saveMockBtn").addEventListener("click", saveMockToStorage);
+
+    function renderSavedMocks() {
+      const container = document.getElementById("savedMocksList");
+      const list = getSavedMocks();
+      if (list.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-400 italic py-2">Abhi koi saved mock test nahi hai.</div>`;
+        return;
+      }
+      container.innerHTML = list.map(m => `
+        <div class="flex items-center justify-between gap-2 bg-white p-2 rounded-lg border border-slate-200 text-xs">
+          <div class="truncate">
+            <div class="font-bold text-slate-800 truncate">${escapeHtml(m.title)}</div>
+            <div class="text-[11px] text-slate-500">${m.questions.length} Qs &bull; ${m.date}</div>
+          </div>
+          <div class="flex gap-1 shrink-0">
+            <button type="button" data-loadid="${m.id}" class="px-2.5 py-1 rounded bg-indigo-600 text-white font-semibold">Open</button>
+            <button type="button" data-delid="${m.id}" class="px-2 py-1 rounded bg-rose-50 text-rose-700 font-semibold">×</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("savedMocksList").addEventListener("click", (e) => {
+      const loadId = e.target.dataset.loadid;
+      const delId = e.target.dataset.delid;
+      let list = getSavedMocks();
+      if (loadId) {
+        const found = list.find(x => String(x.id) === String(loadId));
+        if (found) {
+          app.title = found.title;
+          app.questions = found.questions;
+          app.config = found.config || { marks: 1, neg: 0, timeMin: 60 };
+          document.getElementById("testTitleInput").value = app.title;
+          document.getElementById("cfgMarks").value = app.config.marks;
+          document.getElementById("cfgNeg").value = String(app.config.neg);
+          document.getElementById("cfgTime").value = app.config.timeMin;
+          switchTab("editor");
+        }
+      } else if (delId) {
+        list = list.filter(x => String(x.id) !== String(delId));
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (err) {}
+        renderSavedMocks();
+      }
+    });
+
+    document.getElementById("exportJsonBtn").addEventListener("click", () => {
+      app.title = document.getElementById("testTitleInput").value.trim() || "pyqmocks_test";
+      const payload = JSON.stringify({ title: app.title, questions: app.questions }, null, 2);
+      const blob = new Blob([payload], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = app.title.toLowerCase().replace(/[^a-z0-9]+/g, "_") + ".json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("jsonImportInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        if (Array.isArray(data.questions)) {
+          app.title = data.title || file.name.replace(/\.json$/i, "");
+          app.questions = data.questions;
+          document.getElementById("testTitleInput").value = app.title;
+          showToast(`${app.questions.length} questions import ho gaye!`);
+          switchTab("editor");
+        }
+      } catch (err) {
+        showToast("Invalid JSON file.");
+      }
+      e.target.value = "";
+    });
+
+    // ==================== MOCK TEST ENGINE ====================
+    document.getElementById("startMockBtn").addEventListener("click", startMockTest);
+
+    function startMockTest() {
+      const validQs = app.questions.filter(q => q.text.trim() !== "");
+      if (validQs.length === 0) {
+        showToast("Kam se kam 1 valid question hona chahiye!");
+        return;
+      }
+      app.questions = validQs.map((q, i) => ({ ...q, id: i + 1 }));
+      app.title = document.getElementById("testTitleInput").value.trim() || "PYQ Mock Test";
+      app.config = {
+        marks: parseFloat(document.getElementById("cfgMarks").value) || 1,
+        neg: parseFloat(document.getElementById("cfgNeg").value) || 0,
+        timeMin: parseInt(document.getElementById("cfgTime").value, 10) || 60
+      };
+
+      if (app.test.timer) clearInterval(app.test.timer);
+      app.test = {
+        mode: "single",
+        idx: 0,
+        answers: {},
+        marked: {},
+        visited: { 1: true },
+        submitted: false,
+        secondsLeft: app.config.timeMin * 60,
+        elapsed: 0,
+        timer: null
+      };
+
+      document.getElementById("activeTestTitle").textContent = app.title;
+      document.getElementById("activeMarkingInfo").textContent = `+${app.config.marks} / ${app.config.neg ? "-" + app.config.neg : "0"}`;
+      document.getElementById("testGrid").classList.remove("hidden");
+      document.getElementById("testActiveBar").classList.remove("hidden");
+      document.getElementById("testResultArea").classList.add("hidden");
+
+      switchTab("test");
+      renderTestView();
+
+      app.test.timer = setInterval(() => {
+        if (app.test.submitted) return;
+        app.test.elapsed++;
+        if (app.test.secondsLeft > 0) {
+          app.test.secondsLeft--;
+          document.getElementById("testTimerDisplay").textContent = formatTime(app.test.secondsLeft);
+          if (app.test.secondsLeft === 0) {
+            finalizeMockTest();
+            showToast("Time up! Test automatically submit ho gaya.");
+          }
+        }
+      }, 1000);
+      document.getElementById("testTimerDisplay").textContent = formatTime(app.test.secondsLeft);
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+
+    function renderTestQuestionCard(q) {
+      const sel = app.test.answers[q.id];
+      const opts = ["A", "B", "C", "D", "E"].filter(k => q.options[k] && q.options[k].trim() !== "");
+      return `
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs" id="tq-${q.id}">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+            <span class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold">Q. ${q.id} / ${app.questions.length}</span>
+            ${app.test.marked[q.id] ? `<span class="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded">Marked</span>` : ""}
+          </div>
+          <div class="text-base sm:text-lg font-semibold text-slate-900 mb-4 leading-relaxed">${escapeHtml(q.text)}</div>
+          <div class="space-y-2.5">
+            ${opts.map(k => {
+              const isSel = sel === k;
+              return `
+                <button type="button" data-tqid="${q.id}" data-topt="${k}"
+                  class="option-card w-full text-left p-3 rounded-xl border flex items-start gap-3 ${isSel ? "border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600" : "border-slate-200 bg-white"}">
+                  <span class="w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${isSel ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700"}">${k}</span>
+                  <span class="text-sm sm:text-base pt-0.5">${escapeHtml(q.options[k])}</span>
+                </button>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTestView() {
+      const area = document.getElementById("testQuestionArea");
+      const nav = document.getElementById("testSingleNav");
+
+      if (app.test.mode === "single") {
+        const q = app.questions[app.test.idx];
+        app.test.visited[q.id] = true;
+        area.innerHTML = renderTestQuestionCard(q);
+        nav.classList.remove("hidden");
+        document.getElementById("tPrevBtn").disabled = app.test.idx === 0;
+        document.getElementById("tNextBtn").textContent = app.test.idx === app.questions.length - 1 ? "Save (Last)" : "Save & Next →";
+      } else {
+        app.questions.forEach(q => { app.test.visited[q.id] = true; });
+        area.innerHTML = app.questions.map(q => renderTestQuestionCard(q)).join("");
+        nav.classList.add("hidden");
+      }
+
+      const ansCnt = Object.keys(app.test.answers).length;
+      const markCnt = Object.keys(app.test.marked).filter(k => app.test.marked[k]).length;
+      let skipCnt = 0, notCnt = 0;
+
+      document.getElementById("tPaletteGrid").innerHTML = app.questions.map((q, idx) => {
+        const isA = !!app.test.answers[q.id];
+        const isM = !!app.test.marked[q.id];
+        const isV = !!app.test.visited[q.id];
+        let cls = "bg-slate-100 text-slate-700 border-slate-300";
+        if (isM) cls = "bg-purple-500 text-white border-purple-600";
+        else if (isA) cls = "bg-emerald-500 text-white border-emerald-600";
+        else if (isV) { cls = "bg-rose-100 text-rose-800 border-rose-300"; skipCnt++; }
+        else notCnt++;
+        const ring = app.test.mode === "single" && app.test.idx === idx ? "ring-2 ring-indigo-600 ring-offset-1" : "";
+        return `<button type="button" data-tjump="${idx}" class="h-9 rounded-lg border text-xs font-bold ${cls} ${ring}">${q.id}</button>`;
+      }).join("");
+
+      document.getElementById("activeAttempted").textContent = `${ansCnt} / ${app.questions.length}`;
+      document.getElementById("tCntAns").textContent = ansCnt;
+      document.getElementById("tCntMark").textContent = markCnt;
+      document.getElementById("tCntSkip").textContent = skipCnt;
+      document.getElementById("tCntNot").textContent = notCnt;
+    }
+
+    document.getElementById("testQuestionArea").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-tqid]");
+      if (!btn || app.test.submitted) return;
+      app.test.answers[Number(btn.dataset.tqid)] = btn.dataset.topt;
+      renderTestView();
+    });
+
+    document.getElementById("tPaletteGrid").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-tjump]");
+      if (!btn) return;
+      const idx = Number(btn.dataset.tjump);
+      if (app.test.mode === "single") {
+        app.test.idx = idx;
+        renderTestView();
+      } else {
+        const el = document.getElementById(`tq-${app.questions[idx].id}`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+
+    document.getElementById("tPrevBtn").addEventListener("click", () => {
+      if (app.test.idx > 0) { app.test.idx--; renderTestView(); }
+    });
+    document.getElementById("tNextBtn").addEventListener("click", () => {
+      if (app.test.idx < app.questions.length - 1) { app.test.idx++; renderTestView(); }
+      else openSubmitModal();
+    });
+    document.getElementById("tClearBtn").addEventListener("click", () => {
+      delete app.test.answers[app.questions[app.test.idx].id];
+      renderTestView();
+    });
+    document.getElementById("tMarkBtn").addEventListener("click", () => {
+      const qid = app.questions[app.test.idx].id;
+      app.test.marked[qid] = !app.test.marked[qid];
+      renderTestView();
+    });
+
+    document.querySelectorAll(".tmode-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        app.test.mode = btn.dataset.tmode;
+        document.querySelectorAll(".tmode-btn").forEach(b => {
+          b.className = b === btn ? "tmode-btn px-2.5 py-1 rounded-md bg-white text-indigo-700 shadow-xs" : "tmode-btn px-2.5 py-1 rounded-md text-slate-600";
+        });
+        renderTestView();
+      });
+    });
+
+    function openSubmitModal() {
+      const ans = Object.keys(app.test.answers).length;
+      document.getElementById("mTotal").textContent = app.questions.length;
+      document.getElementById("mAns").textContent = ans;
+      document.getElementById("mUnans").textContent = app.questions.length - ans;
+      document.getElementById("submitModal").classList.remove("hidden");
+    }
+
+    document.getElementById("submitTestBtn").addEventListener("click", openSubmitModal);
+    document.getElementById("mCancelBtn").addEventListener("click", () => document.getElementById("submitModal").classList.add("hidden"));
+    document.getElementById("mConfirmBtn").addEventListener("click", () => {
+      document.getElementById("submitModal").classList.add("hidden");
+      finalizeMockTest();
+    });
+
+    function finalizeMockTest() {
+      app.test.submitted = true;
+      if (app.test.timer) clearInterval(app.test.timer);
+
+      let correct = 0, wrong = 0, skip = 0;
+      app.questions.forEach(q => {
+        const u = app.test.answers[q.id];
+        if (!u) skip++;
+        else if (!q.ans) skip++;
+        else if (u === q.ans) correct++;
+        else wrong++;
+      });
+
+      const maxMarks = app.questions.length * app.config.marks;
+      const score = Math.round((correct * app.config.marks - wrong * app.config.neg) * 100) / 100;
+      const pct = maxMarks > 0 ? Math.max(0, Math.round((score / maxMarks) * 1000) / 10) : 0;
+
+      document.getElementById("testGrid").classList.add("hidden");
+      document.getElementById("testActiveBar").classList.add("hidden");
+      document.getElementById("testResultArea").classList.remove("hidden");
+
+      document.getElementById("resTestTitle").textContent = app.title;
+      document.getElementById("resTime").textContent = formatTime(app.test.elapsed);
+      document.getElementById("resTotalScore").textContent = `${score} / ${maxMarks}`;
+      document.getElementById("resPct").textContent = `${pct}%`;
+      document.getElementById("resCorrectCnt").textContent = correct;
+      document.getElementById("resWrongCnt").textContent = wrong;
+      document.getElementById("resSkipCnt").textContent = skip;
+
+      document.getElementById("resReviewList").innerHTML = app.questions.map(q => {
+        const u = app.test.answers[q.id];
+        const hasKey = !!q.ans;
+        const isCorrect = hasKey && u === q.ans;
+        const badge = !u
+          ? `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold">Unattempted</span>`
+          : !hasKey
+            ? `<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-semibold">Key Not Set</span>`
+            : isCorrect
+              ? `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-xs font-semibold">Correct (+${app.config.marks})</span>`
+              : `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-xs font-semibold">Incorrect (${app.config.neg ? "-" + app.config.neg : "0"})</span>`;
+
+        const opts = ["A", "B", "C", "D", "E"].filter(k => q.options[k] && q.options[k].trim() !== "");
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-2.5">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <span class="px-2.5 py-0.5 rounded bg-slate-800 text-white text-xs font-bold">Q. ${q.id}</span>
+              ${badge}
+            </div>
+            <div class="text-sm sm:text-base font-semibold text-slate-900">${escapeHtml(q.text)}</div>
+            <div class="space-y-1.5">
+              ${opts.map(k => {
+                const isA = k === q.ans;
+                const isU = k === u;
+                let cls = "border-slate-200 bg-white text-slate-700";
+                let tag = "";
+                if (isA) { cls = "border-emerald-500 bg-emerald-50 text-emerald-950"; tag = `<span class="ml-auto text-xs font-bold text-emerald-700">✓ Answer</span>`; }
+                else if (isU && hasKey) { cls = "border-rose-400 bg-rose-50 text-rose-950"; tag = `<span class="ml-auto text-xs font-bold text-rose-700">✗ Your Choice</span>`; }
+                else if (isU) { cls = "border-indigo-400 bg-indigo-50 text-indigo-950"; tag = `<span class="ml-auto text-xs font-bold text-indigo-700">Selected</span>`; }
+                return `<div class="p-2 rounded-lg border flex items-center gap-2 text-xs sm:text-sm ${cls}"><span class="font-bold">${k}.</span><span>${escapeHtml(q.options[k])}</span>${tag}</div>`;
+              }).join("")}
+            </div>
+            ${q.exp ? `<div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-950"><strong>Explanation:</strong> ${escapeHtml(q.exp)}</div>` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    document.getElementById("retakeMockBtn").addEventListener("click", startMockTest);
+    document.getElementById("backToEditorBtn").addEventListener("click", () => switchTab("editor"));
+
+    // Init
+    renderSavedMocks();
+  </script>
+</body>
+</html>
