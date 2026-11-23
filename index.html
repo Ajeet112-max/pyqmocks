@@ -90,6 +90,20 @@
 
     <!-- ==================== VIEW 1: UPLOAD & LIBRARY ==================== -->
     <section id="viewUpload" class="space-y-6">
+      <!-- Public Mock Library (Pre-loaded Papers from library.json) -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">Ready to Attempt</span>
+            <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1">Mock Test Library</h2>
+            <p class="text-xs sm:text-sm text-slate-500">Niche diye gaye papers par click karke seedha mock test shuru karein.</p>
+          </div>
+          <span id="libraryCountBadge" class="px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold">0 Papers</span>
+        </div>
+        <div id="publicLibraryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="text-xs text-slate-400 italic py-3">Papers load ho rahe hain...</div>
+        </div>
+      </div>
       <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
         <div class="max-w-2xl">
           <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Kisi bhi Exam Paper PDF ko Interactive Mock Test me badlein</h1>
@@ -176,6 +190,9 @@
           </button>
           <button type="button" id="shareMockBtn" class="px-3 py-2 rounded-xl border border-violet-200 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs sm:text-sm font-semibold">
             Share Link
+          </button>
+          <button type="button" id="addToLibraryBtn" class="px-3 py-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs sm:text-sm font-semibold">
+            + Library JSON
           </button>
           <button type="button" id="startMockBtn" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-xs">
             Start Mock Test &rarr;
@@ -413,6 +430,7 @@
 
     let app = {
       activeTab: "upload",
+      publicLibrary: [],
       title: "My PYQ Mock Test",
       questions: [], // { id, text, options: {A,B,C,D,E}, ans: 'A'|'B'|'C'|'D'|'E'|'', exp: '' }
       config: { marks: 1, neg: 0, timeMin: 60 },
@@ -1390,7 +1408,94 @@
       showToast("Score history clear ho gayi.");
     });
 
+    // ==================== PUBLIC MOCK LIBRARY (library.json) ====================
+    async function loadPublicLibrary() {
+      const grid = document.getElementById("publicLibraryGrid");
+      const badge = document.getElementById("libraryCountBadge");
+      try {
+        const res = await fetch("./library.json?t=" + Date.now());
+        if (!res.ok) throw new Error("not found");
+        const data = await res.json();
+        app.publicLibrary = Array.isArray(data.papers) ? data.papers : [];
+      } catch (e) {
+        app.publicLibrary = [];
+      }
+
+      badge.textContent = `${app.publicLibrary.length} Paper${app.publicLibrary.length === 1 ? "" : "s"}`;
+      if (app.publicLibrary.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-xs text-slate-400 italic py-2">Abhi library mein koi pre-loaded paper nahi hai. Niche PDF upload karke apna mock banayein.</div>`;
+        return;
+      }
+
+      grid.innerHTML = app.publicLibrary.map((p, idx) => `
+        <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-4 flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px] font-bold">${escapeHtml(p.category || "PYQ Paper")}</span>
+              <span class="text-[11px] font-semibold text-slate-500">${(p.questions || []).length} Qs &bull; ${(p.config && p.config.timeMin) || 60}m</span>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900 leading-snug">${escapeHtml(p.title)}</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" data-libstart="${idx}" class="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs">
+              Attempt Mock
+            </button>
+            <button type="button" data-libedit="${idx}" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold">
+              Edit
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("publicLibraryGrid").addEventListener("click", (e) => {
+      const startIdx = e.target.dataset.libstart;
+      const editIdx = e.target.dataset.libedit;
+      const idx = startIdx !== undefined ? Number(startIdx) : editIdx !== undefined ? Number(editIdx) : -1;
+      if (idx < 0 || !app.publicLibrary[idx]) return;
+      const p = app.publicLibrary[idx];
+      app.title = p.title;
+      app.questions = JSON.parse(JSON.stringify(p.questions || []));
+      app.config = p.config || { marks: 1, neg: 0, timeMin: 60 };
+      document.getElementById("testTitleInput").value = app.title;
+      document.getElementById("cfgMarks").value = app.config.marks;
+      document.getElementById("cfgNeg").value = String(app.config.neg);
+      document.getElementById("cfgTime").value = app.config.timeMin;
+      if (startIdx !== undefined) {
+        startMockTest();
+      } else {
+        switchTab("editor");
+      }
+    });
+
+    document.getElementById("addToLibraryBtn").addEventListener("click", () => {
+      const validQs = app.questions.filter(q => q.text.trim() !== "");
+      if (validQs.length === 0) { showToast("Library mein add karne ke liye kam se kam 1 question hona chahiye."); return; }
+      app.title = document.getElementById("testTitleInput").value.trim() || "PYQ Mock Paper";
+      const newPaper = {
+        id: app.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now().toString().slice(-4),
+        title: app.title,
+        category: "PYQ Paper",
+        config: {
+          marks: parseFloat(document.getElementById("cfgMarks").value) || 1,
+          neg: parseFloat(document.getElementById("cfgNeg").value) || 0,
+          timeMin: parseInt(document.getElementById("cfgTime").value, 10) || 60
+        },
+        questions: validQs.map((q, i) => ({ ...q, id: i + 1 }))
+      };
+      const updatedPapers = [...app.publicLibrary, newPaper];
+      const blob = new Blob([JSON.stringify({ papers: updatedPapers }, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "library.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`"${app.title}" jod kar nayi library.json download ho gayi! Ab ise GitHub par upload karein.`);
+    });
+
     // Init
+    loadPublicLibrary();
     renderSavedMocks();
     checkSharedHash();
 
