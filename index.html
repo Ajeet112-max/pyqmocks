@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pyqmocks — PDF to Interactive Mock Test Maker</title>
+  <meta name="theme-color" content="#4f46e5" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -72,6 +75,9 @@
         </button>
         <button type="button" data-nav="history" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100">
           4. History
+        </button>
+        <button type="button" id="installAppBtn" class="hidden px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs">
+          Install App
         </button>
         <button type="button" id="themeToggleBtn" title="Toggle Dark Mode" class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100">
           🌙
@@ -1387,6 +1393,32 @@
     // Init
     renderSavedMocks();
     checkSharedHash();
+
+    // PWA Install Prompt & Service Worker Registration
+    let deferredInstallPrompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const btn = document.getElementById("installAppBtn");
+      if (btn) btn.classList.remove("hidden");
+    });
+
+    document.getElementById("installAppBtn").addEventListener("click", async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const res = await deferredInstallPrompt.userChoice;
+      if (res && res.outcome === "accepted") {
+        showToast("pyqmocks app install ho raha hai!");
+      }
+      deferredInstallPrompt = null;
+      document.getElementById("installAppBtn").classList.add("hidden");
+    });
+
+    if ("serviceWorker" in navigator && window.location.protocol.startsWith("http")) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>
