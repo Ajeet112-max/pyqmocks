@@ -1673,14 +1673,38 @@
 
           const prompt = `Solve these multiple-choice exam questions accurately. Return ONLY a valid JSON array (no markdown fences) where each item is {"id": number, "ans": "A"|"B"|"C"|"D"|"E", "exp": "1-sentence concise explanation"}. Questions: ${JSON.stringify(payloadQs)}`;
 
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
-            })
-          });
+          const callGeminiModel = async (modelName) => {
+            return await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
+              })
+            });
+          };
+
+          let res = await callGeminiModel("gemini-3.8-flash");
+          if (!res.ok) {
+            const firstErr = await res.clone().json().catch(() => ({}));
+            const msg = (firstErr.error && firstErr.error.message) || "";
+            if (res.status === 404 || res.status === 400 || msg.toLowerCase().includes("no longer available") || msg.toLowerCase().includes("not found")) {
+              // Auto-discover an available Flash model for this API key
+              try {
+                const mRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+                if (mRes.ok) {
+                  const mData = await mRes.json();
+                  const candidates = (mData.models || [])
+                    .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
+                    .map(m => m.name.replace(/^models\//, ""));
+                  const best = candidates.find(n => n.includes("flash") && !n.includes("lite")) || candidates.find(n => n.includes("flash")) || candidates.find(n => n.includes("gemini"));
+                  if (best && best !== "gemini-3.8-flash") {
+                    res = await callGeminiModel(best);
+                  }
+                }
+              } catch (e) {}
+            }
+          }
 
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
