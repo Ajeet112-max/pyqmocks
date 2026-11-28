@@ -1686,24 +1686,36 @@
 
           let res = await callGeminiModel("gemini-3.8-flash");
           if (!res.ok) {
-            const firstErr = await res.clone().json().catch(() => ({}));
-            const msg = (firstErr.error && firstErr.error.message) || "";
-            if (res.status === 404 || res.status === 400 || msg.toLowerCase().includes("no longer available") || msg.toLowerCase().includes("not found")) {
-              // Auto-discover an available Flash model for this API key
-              try {
-                const mRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
-                if (mRes.ok) {
-                  const mData = await mRes.json();
-                  const candidates = (mData.models || [])
-                    .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
-                    .map(m => m.name.replace(/^models\//, ""));
-                  const best = candidates.find(n => n.includes("flash") && !n.includes("lite")) || candidates.find(n => n.includes("flash")) || candidates.find(n => n.includes("gemini"));
-                  if (best && best !== "gemini-3.8-flash") {
-                    res = await callGeminiModel(best);
+            // Retry once after brief pause on 503/429 high-demand spikes
+            if (res.status === 503 || res.status === 429) {
+              await new Promise(r => setTimeout(r, 1500));
+              res = await callGeminiModel("gemini-3.8-flash");
+            }
+          }
+          if (!res.ok) {
+            // Auto-discover and try other available Gemini models for this API key
+            try {
+              const mRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+              if (mRes.ok) {
+                const mData = await mRes.json();
+                const allModels = (mData.models || [])
+                  .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
+                  .map(m => m.name.replace(/^models\//, ""))
+                  .filter(n => n.includes("gemini") && n !== "gemini-3.8-flash");
+                const prioritized = [
+                  ...allModels.filter(n => n.includes("flash") && !n.includes("lite")),
+                  ...allModels.filter(n => n.includes("flash") && n.includes("lite")),
+                  ...allModels.filter(n => !n.includes("flash"))
+                ];
+                for (const altModel of prioritized.slice(0, 4)) {
+                  const altRes = await callGeminiModel(altModel);
+                  if (altRes.ok) {
+                    res = altRes;
+                    break;
                   }
                 }
-              } catch (e) {}
-            }
+              }
+            } catch (e) {}
           }
 
           if (!res.ok) {
